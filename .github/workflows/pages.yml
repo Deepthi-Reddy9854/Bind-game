@@ -1,0 +1,69 @@
+name: Build and deploy Brain Match
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Brain Match
+        uses: actions/checkout@v4
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+
+      - name: Check out Raylib
+        uses: actions/checkout@v4
+        with:
+          repository: raysan5/raylib
+          ref: 6.0
+          path: raylib
+
+      - name: Build Raylib for WebAssembly
+        run: make -C raylib/src PLATFORM=PLATFORM_WEB
+
+      - name: Build Brain Match
+        run: |
+          mkdir -p dist
+          emcc -std=c99 -O2 -Wall -Wextra -Wpedantic \
+            -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2 \
+            -Iraylib/src \
+            main.c game.c menu.c score.c \
+            -Lraylib/src -lraylib.web \
+            -sUSE_GLFW=3 -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 \
+            -sFORCE_FILESYSTEM=1 -lidbfs.js \
+            --shell-file web/shell.html \
+            -o dist/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

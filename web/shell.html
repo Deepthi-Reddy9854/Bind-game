@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#131436">
+  <title>Brain Match - Test Your Memory</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      align-items: center;
+      background: radial-gradient(ellipse at top, #282054, #131436 68%);
+      color: #eef0ff;
+      display: flex;
+      font: 16px system-ui, sans-serif;
+      justify-content: center;
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px;
+    }
+    main { text-align: center; width: 100%; }
+    #status { color: #c5c9e8; margin: 0 0 12px; min-height: 24px; }
+    canvas {
+      background: #131436;
+      border: 1px solid #625bb1;
+      border-radius: 12px;
+      display: block;
+      height: auto;
+      margin: 0 auto;
+      max-height: calc(100vh - 90px);
+      max-width: 100%;
+      object-fit: contain;
+      width: min(1120px, 100%);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p id="status">Loading Brain Match...</p>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  </main>
+  <script>
+    var statusElement = document.getElementById("status");
+    var Module = {
+      canvas: document.getElementById("canvas"),
+      print: function(text) { console.log(text); },
+      printErr: function(text) { console.error(text); },
+      setStatus: function(text) { statusElement.textContent = text; },
+      onRuntimeInitialized: function() { statusElement.textContent = ""; }
+    };
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>

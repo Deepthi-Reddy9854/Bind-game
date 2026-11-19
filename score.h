@@ -17,6 +17,10 @@ typedef struct {
     long seconds;
 } ScoreEntry;
 
+void scores_storage_begin(void);
+bool scores_storage_ready(void);
+bool scores_storage_failed(void);
+
 bool scores_load(ScoreEntry entries[SCORE_TABLE_SIZE],
                  size_t *count,
                  char *error,

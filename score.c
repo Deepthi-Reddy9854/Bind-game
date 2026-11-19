@@ -3,6 +3,94 @@
 #include <stdio.h>
 #include <string.h>
 
+static void set_error(char *error, size_t error_size, const char *message);
+
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+static volatile int storage_status;
+static volatile int sync_status;
+
+EMSCRIPTEN_KEEPALIVE void score_storage_ready_callback(int success)
+{
+    storage_status = success ? 1 : -1;
+}
+
+EMSCRIPTEN_KEEPALIVE void score_storage_sync_callback(int success)
+{
+    sync_status = success ? 1 : -1;
+}
+
+void scores_storage_begin(void)
+{
+    storage_status = 0;
+    EM_ASM({
+        try {
+            if (!FS.analyzePath('/persist').exists) FS.mkdir('/persist');
+            FS.mount(IDBFS, {}, '/persist');
+            FS.syncfs(true, function(error) {
+                Module._score_storage_ready_callback(error ? 0 : 1);
+            });
+        } catch (error) {
+            console.error('Could not initialize saved scores:', error);
+            Module._score_storage_ready_callback(0);
+        }
+    });
+}
+
+bool scores_storage_ready(void)
+{
+    return storage_status == 1;
+}
+
+bool scores_storage_failed(void)
+{
+    return storage_status < 0;
+}
+
+static const char *score_file_path(void)
+{
+    return "/persist/" SCORE_FILE;
+}
+
+static bool sync_browser_storage(char *error, size_t error_size)
+{
+    sync_status = 0;
+    EM_ASM({
+        FS.syncfs(false, function(error) {
+            Module._score_storage_sync_callback(error ? 0 : 1);
+        });
+    });
+    while (sync_status == 0) {
+        emscripten_sleep(10);
+    }
+    if (sync_status < 0) {
+        set_error(error, error_size, "Could not persist browser high scores.");
+        return false;
+    }
+    return true;
+}
+#else
+void scores_storage_begin(void)
+{
+}
+
+bool scores_storage_ready(void)
+{
+    return true;
+}
+
+bool scores_storage_failed(void)
+{
+    return false;
+}
+
+static const char *score_file_path(void)
+{
+    return SCORE_FILE;
+}
+#endif
+
 static void set_error(char *error, size_t error_size, const char *message)
 {
     if (error != NULL && error_size > 0) {
@@ -19,9 +107,9 @@ bool scores_load(ScoreEntry entries[SCORE_TABLE_SIZE],
     char line[256];
 
     *count = 0;
-    file = fopen(SCORE_FILE, "r");
+    file = fopen(score_file_path(), "r");
     if (file == NULL) {
-        file = fopen(SCORE_FILE, "a");
+        file = fopen(score_file_path(), "a");
         if (file == NULL) {
             set_error(error, error_size, "Could not create highscores.txt.");
             return false;
@@ -87,7 +175,7 @@ bool scores_save(const ScoreEntry entries[SCORE_TABLE_SIZE],
                  char *error,
                  size_t error_size)
 {
-    FILE *file = fopen(SCORE_FILE, "w");
+    FILE *file = fopen(score_file_path(), "w");
     size_t index;
 
     if (file == NULL) {
@@ -108,5 +196,10 @@ bool scores_save(const ScoreEntry entries[SCORE_TABLE_SIZE],
         set_error(error, error_size, "Could not finish saving highscores.txt.");
         return false;
     }
+#if defined(__EMSCRIPTEN__)
+    if (!sync_browser_storage(error, error_size)) {
+        return false;
+    }
+#endif
     return true;
 }

@@ -3,8 +3,20 @@
 ## Brain Match — Test Your Memory
 
 Brain Match is a graphical sequence-memory game written in C with Raylib. It
-opens in its own Windows application window; game screens are not drawn in a
-terminal.
+opens in its own application window; game screens are not drawn in a terminal.
+A browser version is built from the same C sources and published through
+GitHub Pages.
+
+## Play in a browser
+
+After the GitHub Pages workflow finishes successfully, play at
+<https://deepthi-reddy9854.github.io/Bind-game/>. It can take a short time for
+the first deployment to become available. If Pages has not been enabled for
+the repository, enable **Settings → Pages → Build and deployment → GitHub
+Actions**, then rerun the workflow.
+
+The browser version stores leaderboard data in that browser's local site
+storage. The Windows version continues to store scores in `highscores.txt`.
 
 ## Project files
 

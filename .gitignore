@@ -1,3 +1,5 @@
 /brain_match.exe
 /brain_match_gui.exe
 /highscores.txt
+/dist/
+/raylib/
