@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raysan5/raylib
-          ref: 6.0
+          ref: "6.0"
           path: raylib
 
       - name: Build Raylib for WebAssembly
