@@ -39,7 +39,7 @@ jobs:
       - name: Build Brain Match
         run: |
           mkdir -p dist
-          emcc -std=c99 -O2 -Wall -Wextra -Wpedantic \
+          emcc -std=gnu99 -O2 -Wall -Wextra -Wpedantic \
             -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2 \
             -Iraylib/src \
             main.c game.c menu.c score.c \
